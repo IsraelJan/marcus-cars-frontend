@@ -9,15 +9,26 @@ type Provider = "google" | "apple" | null;
 interface AuthModalProps {
   open: boolean;
   onClose: () => void;
+
+  // Called when prototype authentication succeeds.
+  // The parent component can then continue the user's intended action.
+  onSuccess?: () => void;
 }
 
 export default function AuthModal({
   open,
   onClose,
+  onSuccess,
 }: AuthModalProps) {
   const [mode, setMode] = useState<AuthMode>("signin");
   const [submitted, setSubmitted] = useState(false);
+
+  // Provider currently being connected.
   const [provider, setProvider] = useState<Provider>(null);
+
+  // Provider used for the successful authentication.
+  const [authenticatedProvider, setAuthenticatedProvider] =
+    useState<Provider>(null);
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -29,25 +40,35 @@ export default function AuthModal({
 
   const isSignIn = mode === "signin";
 
+  /*
+   * Prototype email/password authentication.
+   *
+   * Later this can be replaced with the real authentication
+   * service without changing the UI structure.
+   */
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    setAuthenticatedProvider(null);
     setProvider(null);
     setSubmitted(true);
   };
 
+  /*
+   * Prototype Google / Apple authentication.
+   *
+   * For now we simulate the provider connection.
+   * Real OAuth can be connected later.
+   */
   const handleProviderLogin = (
     selectedProvider: "google" | "apple"
   ) => {
     setProvider(selectedProvider);
+    setAuthenticatedProvider(null);
 
-    /*
-     * Prototype behavior:
-     * We simulate the provider authentication.
-     * Real Google/Apple OAuth will be connected later.
-     */
     setTimeout(() => {
       setProvider(null);
+      setAuthenticatedProvider(selectedProvider);
       setSubmitted(true);
     }, 800);
   };
@@ -56,16 +77,39 @@ export default function AuthModal({
     setMode(isSignIn ? "signup" : "signin");
     setSubmitted(false);
     setProvider(null);
+    setAuthenticatedProvider(null);
   };
 
+  /*
+   * Close the modal and reset its temporary state.
+   */
   const handleClose = () => {
     setSubmitted(false);
     setProvider(null);
+    setAuthenticatedProvider(null);
     setMode("signin");
+
     setFullName("");
     setEmail("");
     setPhone("");
+
     onClose();
+  };
+
+  /*
+   * Continue after successful authentication.
+   *
+   * If the modal was opened from the bidding flow,
+   * the parent can use this callback to continue to
+   * the bid review stage.
+   */
+  const handleContinue = () => {
+    if (onSuccess) {
+      onSuccess();
+      return;
+    }
+
+    handleClose();
   };
 
   const handleForgotPassword = () => {
@@ -130,7 +174,7 @@ export default function AuthModal({
             <p className="mt-3 text-sm leading-6 text-muted">
               {submitted
                 ? isSignIn
-                  ? "Your Marcus account is ready. You can continue exploring live auctions."
+                  ? "Your Marcus account is ready. You can continue with your auction activity."
                   : "Your Marcus account is ready. You can now save vehicles and place bids."
                 : isSignIn
                   ? "Sign in to continue bidding, track vehicles, and manage your activity."
@@ -165,8 +209,12 @@ export default function AuthModal({
                   </p>
 
                   <p className="mt-1 text-xs leading-5 text-muted">
-                    {provider
-                      ? `Signed in with ${provider}.`
+                    {authenticatedProvider
+                      ? `Signed in with ${
+                          authenticatedProvider === "google"
+                            ? "Google"
+                            : "Apple"
+                        }.`
                       : "Authentication completed successfully in this prototype."}
                   </p>
                 </div>
@@ -205,14 +253,15 @@ export default function AuthModal({
               )}
 
               {/* Continue */}
-              <Link
-                href="/auctions"
-                onClick={handleClose}
+              <button
+                type="button"
+                onClick={handleContinue}
                 className="mt-6 flex w-full items-center justify-center rounded-full bg-accent px-6 py-3.5 text-sm font-semibold text-accent-foreground transition-all duration-300 hover:brightness-105"
               >
-                Continue to Live Auctions
-              </Link>
+                Continue
+              </button>
 
+              {/* Close */}
               <button
                 type="button"
                 onClick={handleClose}
