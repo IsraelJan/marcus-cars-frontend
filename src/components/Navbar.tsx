@@ -1,14 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AuthModal from "@/components/AuthModal";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Navbar() {
+  const { user, isAuthenticated, signOut } = useAuth();
+
   const [scrolled, setScrolled] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+
+  const accountMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,6 +34,25 @@ export default function Navbar() {
     document.documentElement.classList.toggle("light", !darkMode);
   }, [darkMode]);
 
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (
+        accountMenuRef.current &&
+        !accountMenuRef.current.contains(event.target as Node)
+      ) {
+        setAccountMenuOpen(false);
+      }
+    };
+
+    if (accountMenuOpen) {
+      document.addEventListener("mousedown", handleOutsideClick);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, [accountMenuOpen]);
+
   const toggleTheme = () => {
     setDarkMode((current) => !current);
   };
@@ -38,8 +63,20 @@ export default function Navbar() {
 
   const openAuth = () => {
     closeMobileMenu();
+    setAccountMenuOpen(false);
     setAuthOpen(true);
   };
+
+  const handleSignOut = () => {
+    signOut();
+    setAccountMenuOpen(false);
+    closeMobileMenu();
+  };
+
+  const displayName = user?.name?.trim() || "Account";
+
+  const firstName =
+    displayName.split(" ")[0] || "Account";
 
   return (
     <>
@@ -121,12 +158,13 @@ export default function Navbar() {
               type="button"
               onClick={toggleTheme}
               aria-label={
-                darkMode ? "Switch to light mode" : "Switch to dark mode"
+                darkMode
+                  ? "Switch to light mode"
+                  : "Switch to dark mode"
               }
               className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface/40 text-muted transition-all duration-300 hover:border-foreground/20 hover:bg-surface hover:text-foreground"
             >
               {darkMode ? (
-                /* Sun */
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -147,7 +185,6 @@ export default function Navbar() {
                   <path d="m19.07 4.93-1.41 1.41" />
                 </svg>
               ) : (
-                /* Moon */
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -162,14 +199,158 @@ export default function Navbar() {
               )}
             </button>
 
-            {/* Sign In */}
-            <button
-              type="button"
-              onClick={openAuth}
-              className="px-3 text-sm text-muted transition-colors hover:text-foreground"
-            >
-              Sign in
-            </button>
+            {/* =================================================
+                AUTHENTICATED ACCOUNT
+            ================================================== */}
+            {isAuthenticated ? (
+              <div
+                ref={accountMenuRef}
+                className="relative"
+              >
+                <button
+                  type="button"
+                  onClick={() =>
+                    setAccountMenuOpen((current) => !current)
+                  }
+                  aria-expanded={accountMenuOpen}
+                  aria-haspopup="menu"
+                  className="flex items-center gap-2 rounded-full border border-border bg-surface/40 px-3.5 py-2 text-sm text-foreground transition-all duration-300 hover:border-foreground/20 hover:bg-surface"
+                >
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
+                    {firstName.charAt(0).toUpperCase()}
+                  </span>
+
+                  <span className="max-w-[110px] truncate">
+                    {firstName}
+                  </span>
+
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    className={`h-3.5 w-3.5 transition-transform ${
+                      accountMenuOpen ? "rotate-180" : ""
+                    }`}
+                    aria-hidden="true"
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </button>
+
+                {/* Account Dropdown */}
+                {accountMenuOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-[calc(100%+12px)] w-64 overflow-hidden rounded-2xl border border-border bg-background/95 p-2 shadow-2xl backdrop-blur-xl"
+                  >
+                    {/* User information */}
+                    <div className="border-b border-border px-3 py-3">
+                      <p className="text-sm font-semibold text-foreground">
+                        {displayName}
+                      </p>
+
+                      <p className="mt-1 truncate text-xs text-muted">
+                        {user?.email}
+                      </p>
+                    </div>
+
+                    {/* Activity */}
+                    <div className="py-2">
+                      <Link
+                        href="/account"
+                        role="menuitem"
+                        onClick={() =>
+                          setAccountMenuOpen(false)
+                        }
+                        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground"
+                      >
+                        <ActivityIcon />
+                        My Activity
+                      </Link>
+
+                      <Link
+                        href="/account"
+                        role="menuitem"
+                        onClick={() =>
+                          setAccountMenuOpen(false)
+                        }
+                        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground"
+                      >
+                        <HeartIcon />
+                        Saved Vehicles
+                      </Link>
+
+                      <Link
+                        href="/account"
+                        role="menuitem"
+                        onClick={() =>
+                          setAccountMenuOpen(false)
+                        }
+                        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground"
+                      >
+                        <HistoryIcon />
+                        Bid History
+                      </Link>
+                    </div>
+
+                    <div className="h-px bg-border" />
+
+                    {/* Account */}
+                    <div className="py-2">
+                      <Link
+                        href="/account"
+                        role="menuitem"
+                        onClick={() =>
+                          setAccountMenuOpen(false)
+                        }
+                        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground"
+                      >
+                        <UserIcon />
+                        Profile
+                      </Link>
+
+                      <Link
+                        href="/account"
+                        role="menuitem"
+                        onClick={() =>
+                          setAccountMenuOpen(false)
+                        }
+                        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground"
+                      >
+                        <SettingsIcon />
+                        Settings
+                      </Link>
+                    </div>
+
+                    <div className="h-px bg-border" />
+
+                    {/* Sign out */}
+                    <div className="p-1">
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={handleSignOut}
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted transition-colors hover:bg-red-500/10 hover:text-red-500"
+                      >
+                        <SignOutIcon />
+                        Sign out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Sign In */
+              <button
+                type="button"
+                onClick={openAuth}
+                className="px-3 text-sm text-muted transition-colors hover:text-foreground"
+              >
+                Sign in
+              </button>
+            )}
 
             {/* Primary CTA */}
             <Link
@@ -184,17 +365,29 @@ export default function Navbar() {
               MOBILE CONTROLS
           ====================================================== */}
           <div className="flex items-center gap-2 lg:hidden">
+            {/* Mobile account indicator */}
+            {isAuthenticated && (
+              <Link
+                href="/account"
+                aria-label="My account"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface/40 text-sm font-semibold text-foreground transition-all duration-300 hover:bg-surface"
+              >
+                {firstName.charAt(0).toUpperCase()}
+              </Link>
+            )}
+
             {/* Mobile Theme Toggle */}
             <button
               type="button"
               onClick={toggleTheme}
               aria-label={
-                darkMode ? "Switch to light mode" : "Switch to dark mode"
+                darkMode
+                  ? "Switch to light mode"
+                  : "Switch to dark mode"
               }
               className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface/40 text-muted transition-all duration-300 hover:bg-surface hover:text-foreground"
             >
               {darkMode ? (
-                /* Sun */
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -212,10 +405,9 @@ export default function Navbar() {
                   <path d="M2 12h2" />
                   <path d="M20 12h2" />
                   <path d="m6.34 17.66-1.41 1.41" />
-                  <path d="m19.07 4.93-1.41-1.41" />
+                  <path d="m19.07 4.93-1.41 1.41" />
                 </svg>
               ) : (
-                /* Moon */
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -233,13 +425,18 @@ export default function Navbar() {
             {/* Mobile Menu Button */}
             <button
               type="button"
-              onClick={() => setMobileMenuOpen((current) => !current)}
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              onClick={() =>
+                setMobileMenuOpen((current) => !current)
+              }
+              aria-label={
+                mobileMenuOpen
+                  ? "Close menu"
+                  : "Open menu"
+              }
               aria-expanded={mobileMenuOpen}
               className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface/40 text-foreground transition-all duration-300 hover:bg-surface"
             >
               {mobileMenuOpen ? (
-                /* Close */
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -253,7 +450,6 @@ export default function Navbar() {
                   <path d="M18 6 6 18" />
                 </svg>
               ) : (
-                /* Menu */
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -298,7 +494,7 @@ export default function Navbar() {
               </Link>
 
               <Link
-                href="/how-it-works"
+                href="/#how-it-works"
                 onClick={closeMobileMenu}
                 className="text-base text-muted transition-colors hover:text-foreground"
               >
@@ -331,14 +527,84 @@ export default function Navbar() {
 
               <div className="my-1 h-px bg-border" />
 
-              {/* Mobile Sign In */}
-              <button
-                type="button"
-                onClick={openAuth}
-                className="text-left text-base text-muted transition-colors hover:text-foreground"
-              >
-                Sign in
-              </button>
+              {isAuthenticated ? (
+                <>
+                  {/* Mobile account heading */}
+                  <div className="rounded-2xl border border-border bg-surface/40 p-4">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground">
+                        {firstName.charAt(0).toUpperCase()}
+                      </span>
+
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground">
+                          {displayName}
+                        </p>
+
+                        <p className="truncate text-xs text-muted">
+                          {user?.email}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                
+                  <Link
+                    href="/account"
+                    onClick={closeMobileMenu}
+                    className="text-base text-muted transition-colors hover:text-foreground"
+                  >
+                    My Activity
+                  </Link>
+
+                  <Link
+                    href="/account"
+                    onClick={closeMobileMenu}
+                    className="text-base text-muted transition-colors hover:text-foreground"
+                  >
+                    Saved Vehicles
+                  </Link>
+
+                  <Link
+                    href="/account"
+                    onClick={closeMobileMenu}
+                    className="text-base text-muted transition-colors hover:text-foreground"
+                  >
+                    Bid History
+                  </Link>
+
+                  <Link
+                    href="/account"
+                    onClick={closeMobileMenu}
+                    className="text-base text-muted transition-colors hover:text-foreground"
+                  >
+                    Profile
+                  </Link>
+
+                  <Link
+                    href="/account"
+                    onClick={closeMobileMenu}
+                    className="text-base text-muted transition-colors hover:text-foreground"
+                  >
+                    Settings
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="text-left text-base text-muted transition-colors hover:text-red-500"
+                  >
+                    Sign out
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={openAuth}
+                  className="text-left text-base text-muted transition-colors hover:text-foreground"
+                >
+                  Sign in
+                </button>
+              )}
 
               {/* Mobile CTA */}
               <Link
@@ -361,5 +627,107 @@ export default function Navbar() {
         onClose={() => setAuthOpen(false)}
       />
     </>
+  );
+}
+
+/* ============================================================
+   ACCOUNT ICONS
+============================================================ */
+
+function ActivityIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path d="M4 19V5" />
+      <path d="M4 19h16" />
+      <path d="m7 15 3-3 3 2 5-6" />
+    </svg>
+  );
+}
+
+function HeartIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path d="M20.84 8.61a5.5 5.5 0 0 0-7.78 0L12 9.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z" />
+    </svg>
+  );
+}
+
+function HistoryIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path d="M3 12a9 9 0 1 0 3-6.71" />
+      <path d="M3 4v5h5" />
+      <path d="M12 7v5l3 2" />
+    </svg>
+  );
+}
+
+function UserIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20a7 7 0 0 1 14 0" />
+    </svg>
+  );
+}
+
+function SettingsIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+      <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.9 1.9-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.04 1.56V20h-2.68v-.09a1.7 1.7 0 0 0-1.04-1.56 1.7 1.7 0 0 0-1.88.34l-.06.06-1.9-1.9.06-.06A1.7 1.7 0 0 0 7.4 15a1.7 1.7 0 0 0-1.56-1.04H5.75v-2.68h.09A1.7 1.7 0 0 0 7.4 10.24a1.7 1.7 0 0 0-.34-1.88L7 8.3l1.9-1.9.06.06a1.7 1.7 0 0 0 1.88.34 1.7 1.7 0 0 0 1.04-1.56V5h2.68v.24a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 1.9 1.9-.06.06a1.7 1.7 0 0 0-.34 1.88 1.7 1.7 0 0 0 1.56 1.04h.24v2.68h-.24A1.7 1.7 0 0 0 19.4 15Z" />
+    </svg>
+  );
+}
+
+function SignOutIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path d="M10 5H6.5A1.5 1.5 0 0 0 5 6.5v11A1.5 1.5 0 0 0 6.5 19H10" />
+      <path d="M14 8l4 4-4 4" />
+      <path d="M18 12H9" />
+    </svg>
   );
 }

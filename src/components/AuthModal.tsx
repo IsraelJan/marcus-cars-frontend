@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 type AuthMode = "signin" | "signup";
 type Provider = "google" | "apple" | null;
@@ -20,6 +21,8 @@ export default function AuthModal({
   onClose,
   onSuccess,
 }: AuthModalProps) {
+  const { signIn } = useAuth();
+
   const [mode, setMode] = useState<AuthMode>("signin");
   const [submitted, setSubmitted] = useState(false);
 
@@ -41,17 +44,48 @@ export default function AuthModal({
   const isSignIn = mode === "signin";
 
   /*
+   * Create the prototype user and save it
+   * through the shared AuthContext.
+   *
+   * Later this can be replaced with real authentication
+   * without changing the UI structure.
+   */
+  const authenticateUser = (authProvider: Provider = null) => {
+    const userName =
+      fullName.trim() ||
+      email.split("@")[0] ||
+      "Marcus Member";
+
+    const userEmail =
+      email.trim() ||
+      (authProvider
+        ? `${authProvider}@marcuscars.demo`
+        : "member@marcuscars.demo");
+
+    signIn({
+      id: `${authProvider ?? "email"}-${userEmail.toLowerCase()}`,
+      name: userName,
+      email: userEmail,
+    });
+
+    setAuthenticatedProvider(authProvider);
+    setProvider(null);
+    setSubmitted(true);
+  };
+
+  /*
    * Prototype email/password authentication.
    *
-   * Later this can be replaced with the real authentication
-   * service without changing the UI structure.
+   * The password itself is not persisted in this prototype.
+   * Authentication state is handled by AuthContext.
    */
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     setAuthenticatedProvider(null);
     setProvider(null);
-    setSubmitted(true);
+
+    authenticateUser();
   };
 
   /*
@@ -67,6 +101,22 @@ export default function AuthModal({
     setAuthenticatedProvider(null);
 
     setTimeout(() => {
+      const providerName =
+        selectedProvider === "google"
+          ? "Google Member"
+          : "Apple Member";
+
+      const providerEmail =
+        selectedProvider === "google"
+          ? "google@marcuscars.demo"
+          : "apple@marcuscars.demo";
+
+      signIn({
+        id: `${selectedProvider}-prototype-user`,
+        name: providerName,
+        email: providerEmail,
+      });
+
       setProvider(null);
       setAuthenticatedProvider(selectedProvider);
       setSubmitted(true);

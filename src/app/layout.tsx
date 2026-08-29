@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import GlobalSiteShell from "@/components/GlobalSiteShell";
+import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
   title: "Marcus Cars",
@@ -15,9 +16,11 @@ export default function RootLayout({
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <body>
-        <GlobalSiteShell>
-          {children}
-        </GlobalSiteShell>
+        <AuthProvider>
+          <GlobalSiteShell>
+            {children}
+          </GlobalSiteShell>
+        </AuthProvider>
       </body>
     </html>
   );
