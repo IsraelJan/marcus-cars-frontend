@@ -256,13 +256,13 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#07090b] pb-24 pt-20 text-white sm:pt-24">
+    <main className="min-h-screen bg-[#07090b] pb-10 pt-20 text-white sm:pt-24">
       {/* =========================================================
           PAGE HEADER
       ========================================================= */}
 
       <section className="border-b border-white/[0.08]">
-        <div className="mx-auto max-w-[1440px] px-6 pb-12 pt-20 lg:px-15 lg:pb-14 lg:pt-20">
+        <div className="mx-auto max-w-[1440px] px-6 pb-12 pt-6 lg:px-10 lg:pb-14 lg:pt-8">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <div className="mb-4 flex items-center gap-3 text-xs uppercase tracking-[0.22em] text-[#c7ff32]">

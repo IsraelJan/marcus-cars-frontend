@@ -16,6 +16,12 @@ export default function Navbar() {
 
   const accountMenuRef = useRef<HTMLDivElement>(null);
 
+  /*
+   * ------------------------------------------------------------
+   * SCROLL STATE
+   * ------------------------------------------------------------
+   */
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
@@ -30,9 +36,21 @@ export default function Navbar() {
     };
   }, []);
 
+  /*
+   * ------------------------------------------------------------
+   * THEME
+   * ------------------------------------------------------------
+   */
+
   useEffect(() => {
     document.documentElement.classList.toggle("light", !darkMode);
   }, [darkMode]);
+
+  /*
+   * ------------------------------------------------------------
+   * CLOSE ACCOUNT DROPDOWN WHEN CLICKING OUTSIDE
+   * ------------------------------------------------------------
+   */
 
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
@@ -53,6 +71,12 @@ export default function Navbar() {
     };
   }, [accountMenuOpen]);
 
+  /*
+   * ------------------------------------------------------------
+   * HELPERS
+   * ------------------------------------------------------------
+   */
+
   const toggleTheme = () => {
     setDarkMode((current) => !current);
   };
@@ -61,22 +85,41 @@ export default function Navbar() {
     setMobileMenuOpen(false);
   };
 
+  const closeAccountMenu = () => {
+    setAccountMenuOpen(false);
+  };
+
   const openAuth = () => {
     closeMobileMenu();
-    setAccountMenuOpen(false);
+    closeAccountMenu();
     setAuthOpen(true);
   };
 
   const handleSignOut = () => {
     signOut();
-    setAccountMenuOpen(false);
+    closeAccountMenu();
     closeMobileMenu();
   };
+
+  /*
+   * ------------------------------------------------------------
+   * USER DISPLAY
+   * ------------------------------------------------------------
+   */
 
   const displayName = user?.name?.trim() || "Account";
 
   const firstName =
-    displayName.split(" ")[0] || "Account";
+    displayName.split(" ")[0]?.trim() || "Account";
+
+  const userInitial =
+    firstName.charAt(0).toUpperCase() || "A";
+
+  /*
+   * ------------------------------------------------------------
+   * RENDER
+   * ------------------------------------------------------------
+   */
 
   return (
     <>
@@ -91,6 +134,7 @@ export default function Navbar() {
           {/* =====================================================
               LOGO
           ====================================================== */}
+
           <Link
             href="/"
             className="relative z-10 text-xl font-semibold tracking-tight text-foreground transition-opacity hover:opacity-80"
@@ -102,6 +146,7 @@ export default function Navbar() {
           {/* =====================================================
               DESKTOP NAVIGATION
           ====================================================== */}
+
           <nav
             className="hidden items-center gap-7 lg:flex"
             aria-label="Primary navigation"
@@ -152,8 +197,10 @@ export default function Navbar() {
           {/* =====================================================
               DESKTOP ACTIONS
           ====================================================== */}
+
           <div className="hidden items-center gap-3 lg:flex">
             {/* Theme Toggle */}
+
             <button
               type="button"
               onClick={toggleTheme}
@@ -202,6 +249,7 @@ export default function Navbar() {
             {/* =================================================
                 AUTHENTICATED ACCOUNT
             ================================================== */}
+
             {isAuthenticated ? (
               <div
                 ref={accountMenuRef}
@@ -217,7 +265,7 @@ export default function Navbar() {
                   className="flex items-center gap-2 rounded-full border border-border bg-surface/40 px-3.5 py-2 text-sm text-foreground transition-all duration-300 hover:border-foreground/20 hover:bg-surface"
                 >
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
-                    {firstName.charAt(0).toUpperCase()}
+                    {userInitial}
                   </span>
 
                   <span className="max-w-[110px] truncate">
@@ -239,13 +287,17 @@ export default function Navbar() {
                   </svg>
                 </button>
 
-                {/* Account Dropdown */}
+                {/* =================================================
+                    ACCOUNT DROPDOWN
+                ================================================== */}
+
                 {accountMenuOpen && (
                   <div
                     role="menu"
                     className="absolute right-0 top-[calc(100%+12px)] w-64 overflow-hidden rounded-2xl border border-border bg-background/95 p-2 shadow-2xl backdrop-blur-xl"
                   >
-                    {/* User information */}
+                    {/* User Information */}
+
                     <div className="border-b border-border px-3 py-3">
                       <p className="text-sm font-semibold text-foreground">
                         {displayName}
@@ -256,77 +308,92 @@ export default function Navbar() {
                       </p>
                     </div>
 
-                    {/* Activity */}
+                    {/* =================================================
+                        ACCOUNT HOME
+                    ================================================== */}
+
                     <div className="py-2">
                       <Link
                         href="/account"
                         role="menuitem"
-                        onClick={() =>
-                          setAccountMenuOpen(false)
-                        }
+                        onClick={closeAccountMenu}
+                        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground"
+                      >
+                        <AccountIcon />
+                        <span>Account</span>
+                      </Link>
+                    </div>
+
+                    {/* =================================================
+                        ACTIVITY
+                    ================================================== */}
+
+                    <div className="py-2">
+                      <Link
+                        href="/account"
+                        role="menuitem"
+                        onClick={closeAccountMenu}
                         className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground"
                       >
                         <ActivityIcon />
-                        My Activity
+                        <span>My Activity</span>
                       </Link>
 
                       <Link
-                        href="/account"
+                        href="/account/saved-vehicles"
                         role="menuitem"
-                        onClick={() =>
-                          setAccountMenuOpen(false)
-                        }
+                        onClick={closeAccountMenu}
                         className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground"
                       >
                         <HeartIcon />
-                        Saved Vehicles
+                        <span>Saved Vehicles</span>
                       </Link>
 
                       <Link
-                        href="/account"
+                        href="/account/bid-history"
                         role="menuitem"
-                        onClick={() =>
-                          setAccountMenuOpen(false)
-                        }
+                        onClick={closeAccountMenu}
                         className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground"
                       >
                         <HistoryIcon />
-                        Bid History
+                        <span>Bid History</span>
                       </Link>
                     </div>
 
                     <div className="h-px bg-border" />
 
-                    {/* Account */}
+                    {/* =================================================
+                        PERSONAL ACCOUNT
+                    ================================================== */}
+
                     <div className="py-2">
                       <Link
-                        href="/account"
+                        href="/account/profile"
                         role="menuitem"
-                        onClick={() =>
-                          setAccountMenuOpen(false)
-                        }
+                        onClick={closeAccountMenu}
                         className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground"
                       >
                         <UserIcon />
-                        Profile
+                        <span>Profile</span>
                       </Link>
 
                       <Link
-                        href="/account"
+                        href="/account/settings"
                         role="menuitem"
-                        onClick={() =>
-                          setAccountMenuOpen(false)
-                        }
+                        onClick={closeAccountMenu}
                         className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground"
                       >
                         <SettingsIcon />
-                        Settings
+                        <span>Settings</span>
                       </Link>
                     </div>
 
                     <div className="h-px bg-border" />
 
-                    {/* Sign out */}
+                    {/* =================================================
+                        SIGN OUT
+                    ================================================== */}
+
                     <div className="p-1">
                       <button
                         type="button"
@@ -335,14 +402,17 @@ export default function Navbar() {
                         className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted transition-colors hover:bg-red-500/10 hover:text-red-500"
                       >
                         <SignOutIcon />
-                        Sign out
+                        <span>Sign out</span>
                       </button>
                     </div>
                   </div>
                 )}
               </div>
             ) : (
-              /* Sign In */
+              /* =================================================
+                 SIGN IN
+              ================================================== */
+
               <button
                 type="button"
                 onClick={openAuth}
@@ -352,7 +422,10 @@ export default function Navbar() {
               </button>
             )}
 
-            {/* Primary CTA */}
+            {/* =================================================
+                PRIMARY CTA
+            ================================================== */}
+
             <Link
               href="/auctions"
               className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground transition-all duration-300 hover:scale-[1.02] hover:brightness-105"
@@ -364,19 +437,22 @@ export default function Navbar() {
           {/* =====================================================
               MOBILE CONTROLS
           ====================================================== */}
+
           <div className="flex items-center gap-2 lg:hidden">
-            {/* Mobile account indicator */}
+            {/* Mobile Account */}
+
             {isAuthenticated && (
               <Link
                 href="/account"
                 aria-label="My account"
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface/40 text-sm font-semibold text-foreground transition-all duration-300 hover:bg-surface"
               >
-                {firstName.charAt(0).toUpperCase()}
+                {userInitial}
               </Link>
             )}
 
             {/* Mobile Theme Toggle */}
+
             <button
               type="button"
               onClick={toggleTheme}
@@ -423,6 +499,7 @@ export default function Navbar() {
             </button>
 
             {/* Mobile Menu Button */}
+
             <button
               type="button"
               onClick={() =>
@@ -471,6 +548,7 @@ export default function Navbar() {
         {/* =====================================================
             MOBILE MENU
         ====================================================== */}
+
         {mobileMenuOpen && (
           <div className="border-t border-border bg-background/95 px-6 py-6 backdrop-blur-xl lg:hidden">
             <nav
@@ -527,13 +605,16 @@ export default function Navbar() {
 
               <div className="my-1 h-px bg-border" />
 
+              {/* =================================================
+                  MOBILE AUTHENTICATED ACCOUNT
+              ================================================== */}
+
               {isAuthenticated ? (
                 <>
-                  {/* Mobile account heading */}
                   <div className="rounded-2xl border border-border bg-surface/40 p-4">
                     <div className="flex items-center gap-3">
                       <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground">
-                        {firstName.charAt(0).toUpperCase()}
+                        {userInitial}
                       </span>
 
                       <div className="min-w-0">
@@ -547,7 +628,19 @@ export default function Navbar() {
                       </div>
                     </div>
                   </div>
-                
+
+                  {/* Account */}
+
+                  <Link
+                    href="/account"
+                    onClick={closeMobileMenu}
+                    className="text-base text-muted transition-colors hover:text-foreground"
+                  >
+                    Account
+                  </Link>
+
+                  {/* My Activity */}
+
                   <Link
                     href="/account"
                     onClick={closeMobileMenu}
@@ -556,37 +649,47 @@ export default function Navbar() {
                     My Activity
                   </Link>
 
+                  {/* Saved Vehicles */}
+
                   <Link
-                    href="/account"
+                    href="/account/saved-vehicles"
                     onClick={closeMobileMenu}
                     className="text-base text-muted transition-colors hover:text-foreground"
                   >
                     Saved Vehicles
                   </Link>
 
+                  {/* Bid History */}
+
                   <Link
-                    href="/account"
+                    href="/account/bid-history"
                     onClick={closeMobileMenu}
                     className="text-base text-muted transition-colors hover:text-foreground"
                   >
                     Bid History
                   </Link>
 
+                  {/* Profile */}
+
                   <Link
-                    href="/account"
+                    href="/account/profile"
                     onClick={closeMobileMenu}
                     className="text-base text-muted transition-colors hover:text-foreground"
                   >
                     Profile
                   </Link>
 
+                  {/* Settings */}
+
                   <Link
-                    href="/account"
+                    href="/account/settings"
                     onClick={closeMobileMenu}
                     className="text-base text-muted transition-colors hover:text-foreground"
                   >
                     Settings
                   </Link>
+
+                  {/* Sign Out */}
 
                   <button
                     type="button"
@@ -607,6 +710,7 @@ export default function Navbar() {
               )}
 
               {/* Mobile CTA */}
+
               <Link
                 href="/auctions"
                 onClick={closeMobileMenu}
@@ -622,6 +726,7 @@ export default function Navbar() {
       {/* =====================================================
           AUTHENTICATION MODAL
       ====================================================== */}
+
       <AuthModal
         open={authOpen}
         onClose={() => setAuthOpen(false)}
@@ -633,6 +738,22 @@ export default function Navbar() {
 /* ============================================================
    ACCOUNT ICONS
 ============================================================ */
+
+function AccountIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20a7 7 0 0 1 14 0" />
+    </svg>
+  );
+}
 
 function ActivityIcon() {
   return (
